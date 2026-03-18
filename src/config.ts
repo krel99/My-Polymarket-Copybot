@@ -38,6 +38,11 @@ export const config = {
     maxPriceDrift: parseFloat(process.env.MAX_PRICE_DRIFT || "0.05"),
     // LIMIT=GTC, FOK=fill-or-kill, FAK=fill-and-kill
     orderType: (process.env.ORDER_TYPE || "FOK") as "LIMIT" | "FOK" | "FAK",
+    // 0 = EOA (MetaMask/direct private key), 1 = Magic.link proxy wallet
+    signatureType: parseInt(process.env.SIGNATURE_TYPE || "0") as 0 | 1,
+    // For signature type 1: the proxy contract address where funds are held.
+    // Leave empty for type 0 — the EOA address is used automatically.
+    funderAddress: process.env.FUNDER_ADDRESS || "",
   },
 
   risk: {

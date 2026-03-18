@@ -41,7 +41,7 @@ class PolymarketCopyBot {
     if (config.risk.maxSessionNotional > 0 || config.risk.maxPerMarketNotional > 0) {
       console.log(`Risk caps: session=${config.risk.maxSessionNotional || "∞"} USDC, per-market=${config.risk.maxPerMarketNotional || "∞"} USDC`);
     }
-    console.log(`Auth mode: EOA (signature type 0)`);
+    console.log(`Auth mode: ${config.trading.signatureType === 1 ? "Magic.link proxy (signature type 1)" : "EOA (signature type 0)"}`);
     console.log("================================\n");
 
     validateConfig();

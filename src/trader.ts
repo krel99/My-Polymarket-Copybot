@@ -73,10 +73,11 @@ export class TradeExecutor {
 
   async initialize(): Promise<void> {
     console.log(`🔧 Initializing trader...`);
+    const { signatureType, funderAddress: configFunder } = config.trading;
+    const funderAddress = signatureType === 1 && configFunder ? configFunder : this.wallet.address;
     console.log(`   Signing wallet (EOA): ${this.wallet.address}`);
-    const funderAddress = this.wallet.address;
     console.log(`   Funder wallet: ${funderAddress}`);
-    console.log(`   Signature type: 0`);
+    console.log(`   Signature type: ${signatureType} (${signatureType === 1 ? "Magic.link proxy" : "EOA"})`);
 
     try {
       await this.deriveAndReinitApiKeys(funderAddress);
@@ -86,7 +87,11 @@ export class TradeExecutor {
       throw error;
     }
 
-    await this.ensureApprovals();
+    if (config.trading.signatureType === 0) {
+      await this.ensureApprovals();
+    } else {
+      console.log(`ℹ️  Skipping approval setup — proxy wallet approvals are managed by Polymarket`);
+    }
 
     console.log(`✅ Trader initialized`);
     console.log(`   Market cache: Enabled (TTL: ${this.CACHE_TTL / 1000}s)`);
@@ -143,7 +148,7 @@ export class TradeExecutor {
         secret: creds.secret,
         passphrase: creds.passphrase,
       },
-      0,
+      config.trading.signatureType,
       funderAddress,
       config.polymarketGeoToken || undefined,
     );
