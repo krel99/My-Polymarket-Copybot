@@ -419,7 +419,9 @@ export class TradeExecutor {
   }
 
   private async executeLimitOrder(originalTrade: Trade, copyNotional: number): Promise<CopyExecutionResult> {
-    await this.validateBalance(copyNotional, originalTrade.tokenId);
+    if (config.trading.signatureType === 0) {
+      await this.validateBalance(copyNotional, originalTrade.tokenId);
+    }
 
     const [orderbook, orderOpts] = await Promise.all([
       this.clobClient.getOrderBook(originalTrade.tokenId),
@@ -470,7 +472,9 @@ export class TradeExecutor {
   }
 
   private async executeMarketOrder(originalTrade: Trade, orderType: "FOK" | "FAK", copyNotional: number): Promise<CopyExecutionResult> {
-    await this.validateBalance(copyNotional, originalTrade.tokenId);
+    if (config.trading.signatureType === 0) {
+      await this.validateBalance(copyNotional, originalTrade.tokenId);
+    }
 
     const [orderbook, orderOpts] = await Promise.all([
       this.clobClient.getOrderBook(originalTrade.tokenId),
