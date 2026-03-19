@@ -582,8 +582,14 @@ export class TradeExecutor {
 
   async getPositions(): Promise<any[]> {
     try {
+      // In proxy mode (type 1) funds are held in the funder/proxy address, not the EOA.
+      // Querying the EOA would return nothing and cause the per-market cap to reset on
+      // every restart. Always use the funder address when one is configured.
+      const { signatureType, funderAddress } = config.trading;
+      const userAddress = signatureType === 1 && funderAddress ? funderAddress.toLowerCase() : this.wallet.address.toLowerCase();
+
       const response = await axios.get("https://data-api.polymarket.com/positions", {
-        params: { user: this.wallet.address.toLowerCase() },
+        params: { user: userAddress },
         headers: { Accept: "application/json" },
       });
       return Array.isArray(response.data) ? response.data : [];
