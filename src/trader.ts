@@ -256,9 +256,11 @@ export class TradeExecutor {
 
   private getBestPrice(orderbook: any, side: "BUY" | "SELL", fallback: number): number {
     if (side === "BUY") {
-      return Number(orderbook.asks[0]?.price || fallback);
+      const asks: any[] = orderbook.asks;
+      return Number(asks[asks.length - 1]?.price || fallback);
     }
-    return Number(orderbook.bids[0]?.price || fallback);
+    const bids: any[] = orderbook.bids;
+    return Number(bids[bids.length - 1]?.price || fallback);
   }
 
   private applySlippage(price: number, side: "BUY" | "SELL", slippage: number): number {
