@@ -1,4 +1,4 @@
-import type { Trade } from './monitor.js';
+import type { Trade } from "./monitor.js";
 
 export interface PositionState {
   tokenId: string;
@@ -18,11 +18,7 @@ export class PositionTracker {
     let skipped = 0;
 
     for (const pos of positions || []) {
-      const tokenId =
-        pos?.asset_id ||
-        pos?.token_id ||
-        pos?.tokenId ||
-        pos?.assetId;
+      const tokenId = pos?.asset_id || pos?.token_id || pos?.tokenId || pos?.assetId || pos?.asset; // Data API returns token ID as "asset"
 
       if (!tokenId) {
         skipped++;
@@ -30,19 +26,31 @@ export class PositionTracker {
       }
 
       const market =
+        pos?.conditionId || // Data API returns "conditionId" (camelCase)
         pos?.condition_id ||
-        pos?.conditionId ||
         pos?.market ||
         pos?.market_id ||
-        '';
+        "";
 
-      const outcome = pos?.outcome || pos?.side || 'YES';
+      const outcome = pos?.outcome || pos?.side || "YES";
 
       const shares = this.parseNumber(pos?.size ?? pos?.quantity ?? pos?.shares ?? pos?.balance ?? pos?.position);
-      const notional = this.parseNumber(pos?.usdcValue ?? pos?.notional ?? pos?.usdc ?? pos?.value ?? pos?.collateral);
+      let notional = this.parseNumber(
+        pos?.initialValue ?? // Data API cost-basis field
+          pos?.usdcValue ??
+          pos?.notional ??
+          pos?.usdc ??
+          pos?.value ??
+          pos?.collateral,
+      );
       const avgPrice =
-        this.parseNumber(pos?.avgPrice ?? pos?.averagePrice ?? pos?.entryPrice ?? pos?.price) ||
-        (shares > 0 ? Math.abs(notional / shares) : 0);
+        this.parseNumber(pos?.avgPrice ?? pos?.avg_price ?? pos?.averagePrice ?? pos?.entryPrice ?? pos?.price) ||
+        (shares > 0 && notional > 0 ? Math.abs(notional / shares) : 0);
+
+      // Derive notional from shares × avg price when no direct USDC field is present
+      if (notional === 0 && shares > 0 && avgPrice > 0) {
+        notional = shares * avgPrice;
+      }
 
       const state: PositionState = {
         tokenId,
@@ -61,18 +69,12 @@ export class PositionTracker {
     return { loaded, skipped };
   }
 
-  recordFill(params: {
-    trade: Trade;
-    notional: number;
-    shares: number;
-    price: number;
-    side: 'BUY' | 'SELL';
-  }): void {
+  recordFill(params: { trade: Trade; notional: number; shares: number; price: number; side: "BUY" | "SELL" }): void {
     const { trade, notional, shares, price, side } = params;
     const key = trade.tokenId;
     const existing = this.positions.get(key);
 
-    const sign = side === 'BUY' ? 1 : -1;
+    const sign = side === "BUY" ? 1 : -1;
     const deltaShares = shares * sign;
     const deltaNotional = notional * sign;
 
@@ -114,7 +116,7 @@ export class PositionTracker {
   }
 
   private parseNumber(value: any): number {
-    const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+    const n = typeof value === "string" ? parseFloat(value) : Number(value);
     return Number.isFinite(n) ? n : 0;
   }
 }
