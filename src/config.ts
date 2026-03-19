@@ -70,5 +70,12 @@ export function validateConfig(): void {
   console.log("ℹ️  API credentials will be derived/generated from PRIVATE_KEY at startup");
 
   console.log("✅ Configuration validated");
-  console.log(`   Auth: EOA (signature type 0)`);
+  const sigType = config.trading.signatureType;
+  console.log(`   Auth: ${sigType === 1 ? "Magic.link proxy (signature type 1)" : "EOA (signature type 0)"}`);
+  if (sigType === 1 && !config.trading.funderAddress) {
+    throw new Error("SIGNATURE_TYPE=1 requires FUNDER_ADDRESS to be set in .env");
+  }
+  if (sigType === 1 && config.trading.funderAddress) {
+    console.log(`   Funder address: ${config.trading.funderAddress}`);
+  }
 }
