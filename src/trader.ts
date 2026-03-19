@@ -60,13 +60,16 @@ export class TradeExecutor {
     this.provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
     this.wallet = new ethers.Wallet(config.privateKey, this.provider);
 
+    const { signatureType, funderAddress: configFunder } = config.trading;
+    const initFunderAddress = signatureType === 1 && configFunder ? configFunder : undefined;
+
     this.clobClient = new ClobClient(
       "https://clob.polymarket.com",
       137,
       this.wallet,
       undefined,
-      undefined,
-      undefined,
+      signatureType,
+      initFunderAddress,
       config.polymarketGeoToken || undefined,
     );
   }
